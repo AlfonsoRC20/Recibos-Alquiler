@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf'
 import { letras } from './letras'
 import { MESES, type Habitacion, type Perfil } from '../types'
 
-export type DatosRecibo = { fecha: string; mes: number; anio: number; renta: number; suministros: number }
+export type DatosRecibo = { fecha: string; mes: number; anio: number; renta: number; suministros: number; numeroRecibo?: string }
 const eur = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ',')) + ' €'
 const eur2 = (n: number) => n.toFixed(2).replace('.', ',') + ' €'
 export const nombreArchivo = (h: Habitacion, d: DatosRecibo) =>
@@ -21,7 +21,7 @@ export function generarRecibo(a: Perfil, h: Habitacion, d: DatosRecibo) {
   const box = (x: number, y: number, w: number, hh: number, c: [number, number, number]) => { doc.setFillColor(...c); doc.rect(x, y, w, hh, 'F') }
   const lin = (s: string, x: number, y: number) => { doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.text(doc.splitTextToSize(s, 150), x, y) }
   box(L, 45, W, 22, AM); doc.setTextColor(47, 95, 167); doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.text('RECIBO DE ALQUILER', L + 4, 61)
-  t(d.anio, L + W - 8, 60, 'bold', 10, 'right')
+  t(d.numeroRecibo ? 'Nº ' + d.numeroRecibo : d.anio, L + W - 8, 60, 'bold', 10, 'right')
   box(L, 80, W, 16, AM); t('Recibido de:', L + 4, 91, 'bold'); t('Recibido por:', L + W / 2 + 4, 91, 'bold')
   box(L, 102, W, 110, AZ)
   t('Arrendataria:', L + 4, 120, 'bold'); t(h.inq_nombre, L + 90, 120, 'bolditalic', 10)
