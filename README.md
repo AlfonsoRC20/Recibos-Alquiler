@@ -16,7 +16,7 @@ propios datos (seguridad por fila en la base de datos).
 ## Puesta en marcha
 
 1. Crea un proyecto gratuito en [supabase.com](https://supabase.com).
-2. En **SQL Editor**, ejecuta el contenido de `supabase/schema.sql`.
+2. En **SQL Editor**, ejecuta, por este orden y una sola vez cada uno: `supabase/schema.sql`, `supabase/002_recibos.sql` y `supabase/003_quitar_anulados.sql`.
 3. En **Project Settings → API**, copia la URL y la clave `anon` (pública).
 4. `cp .env.example .env.local` y rellena los dos valores.
 5. `npm install` y `npm run dev`.
