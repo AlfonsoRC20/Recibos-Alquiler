@@ -1,0 +1,16 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bloquear archivos con datos personales
+        run: |
+          bad=$(git ls-files | grep -Ei '(^datos-reales/|\.(pdf|xlsx|xls|docx|zip)$|(^|/)\.env($|\.local))' || true)
+          if [ -n "$bad" ]; then echo "Archivos prohibidos en el repositorio:"; echo "$bad"; exit 1; fi
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm test
+      - run: npm run build

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recibos de alquiler</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--tx:#1b2433;--mu:#5d6b82;--ac:#2f5fa7;--bd:#d5dce8;--ok:#e7f1e3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141922;--card:#1d2431;--tx:#e8edf5;--mu:#93a1b8;--ac:#6b9be0;--bd:#2f3a4d;--ok:#22331f}}
+:root[data-theme="dark"]{--bg:#141922;--card:#1d2431;--tx:#e8edf5;--mu:#93a1b8;--ac:#6b9be0;--bd:#2f3a4d;--ok:#22331f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.35rem;margin:0 0 2px}.sub{color:var(--mu);margin:0 0 18px;font-size:.92rem}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+label{display:block;font-size:.82rem;color:var(--mu);margin:0 0 4px}
+select,input{width:100%;padding:11px 12px;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px}
+.rooms{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.room{padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);text-align:left;font:inherit;cursor:pointer}
+.room b{display:block}.room small{color:var(--mu)}
+.room.on{border-color:var(--ac);outline:2px solid var(--ac)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.big{font-size:1.05rem;border-color:var(--ac)}
+button.go{width:100%;padding:13px;border:0;border-radius:10px;background:var(--ac);color:#fff;font:600 1rem inherit;cursor:pointer}
+button.go:disabled{opacity:.45;cursor:not-allowed}
+.sum{background:var(--ok);border-radius:8px;padding:10px 12px;font-size:.92rem;margin-bottom:12px}
+.msg{font-size:.88rem;color:var(--mu);margin-top:10px;min-height:1.3em}
+</style>
+</head>
+<body>
+<main>
+<h1>Recibos de alquiler</h1>
+<p class="sub" id="sub"></p>
+
+<div class="card">
+  <label>1. Elige la habitación</label>
+  <div class="rooms" id="rooms"></div>
+
+  <label for="fecha">2. Fecha de pago (escríbela o elígela; descarga con Intro o con el botón)</label>
+  <input type="date" id="fecha" class="big" style="margin-bottom:12px">
+
+  <div class="sum" id="sum">Elige una habitación y una fecha.</div>
+
+  <div class="row">
+    <div><label for="mes">Mes que se paga</label><select id="mes"></select></div>
+    <div><label for="anio">Año</label><input type="number" id="anio" min="2024" max="2100"></div>
+  </div>
+  <div class="row">
+    <div><label for="renta">Renta (€)</label><input type="number" id="renta" step="0.01"></div>
+    <div><label for="sumi">Suministros (€)</label><input type="number" id="sumi" step="0.01"></div>
+  </div>
+  <button class="go" id="btn" disabled>Descargar recibo PDF</button>
+  <div class="msg" id="msg"></div>
+</div>
+</main>
+
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="../../datos-reales/datos.js"></script>
+<script>if(!window.DATOS)document.write('<script src="datos-ejemplo.js"><\/script>')</script>
+<script>
+const LESSOR=DATOS.arrendador;
+const ROOMS=DATOS.habitaciones;
+const SUMI=DATOS.suministros;
+const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const $=id=>document.getElementById(id);
+let sel=null;
+$("sub").textContent=DATOS.propiedad+(DATOS.demo?" · DATOS DE EJEMPLO":"");
+
+function letras(n){
+ const U=["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce","quince","dieciséis","diecisiete","dieciocho","diecinueve","veinte","veintiuno","veintidós","veintitrés","veinticuatro","veinticinco","veintiséis","veintisiete","veintiocho","veintinueve"];
+ const D=["","","","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa"];
+ const C=["","ciento","doscientos","trescientos","cuatrocientos","quinientos","seiscientos","setecientos","ochocientos","novecientos"];
+ function b(x){
+  if(x<30)return U[x];
+  if(x<100)return D[Math.floor(x/10)]+(x%10?" y "+U[x%10]:"");
+  if(x===100)return "cien";
+  if(x<1000)return C[Math.floor(x/100)]+(x%100?" "+b(x%100):"");
+  if(x<2000)return "mil"+(x%1000?" "+b(x%1000):"");
+  return b(Math.floor(x/1000))+" mil"+(x%1000?" "+b(x%1000):"");
+ }
+ const e=Math.floor(n),c=Math.round((n-e)*100);
+ let s=b(e)+(e===1?" euro":" euros");
+ if(c)s+=" con "+b(c)+(c===1?" céntimo":" céntimos");
+ return s.charAt(0).toUpperCase()+s.slice(1);
+}
+const eur=n=>(Number.isInteger(n)?String(n):n.toFixed(2).replace(".",","))+" €";
+const eur2=n=>n.toFixed(2).replace(".",",")+" €";
+const fmtF=d=>d.split("-").reverse().join("/");
+
+MESES.forEach((m,i)=>{const o=document.createElement("option");o.value=i;o.textContent=m;$("mes").appendChild(o)});
+Object.entries(ROOMS).forEach(([k,r])=>{
+ const b=document.createElement("button");b.type="button";b.className="room";b.dataset.k=k;
+ b.innerHTML="<b>Hab. "+k+" · "+r.n.split(" ")[0]+"</b><small>"+r.t+"</small>";
+ b.onclick=()=>{sel=k;document.querySelectorAll(".room").forEach(x=>x.classList.toggle("on",x===b));
+  $("renta").value=r.renta;$("sumi").value=SUMI;refresh()};
+ $("rooms").appendChild(b);
+});
+
+function refresh(){
+ const f=$("fecha").value;
+ $("btn").disabled=!(sel&&f);
+ if(sel&&f){
+  const t=(+$("renta").value)+(+$("sumi").value);
+  $("sum").textContent="Hab. "+sel+" · "+ROOMS[sel].n+" · "+MESES[+$("mes").value]+" "+$("anio").value+" · Total "+eur(t)+" · pagado el "+fmtF(f);
+ }else $("sum").textContent="Elige una habitación y una fecha.";
+}
+$("fecha").addEventListener("change",()=>{
+ const f=$("fecha").value;
+ if(f){const [y,m]=f.split("-");$("mes").value=+m-1;$("anio").value=y}
+ refresh();
+ $("msg").textContent=(f&&!sel)?"Falta elegir la habitación.":"";
+});
+$("fecha").addEventListener("keydown",e=>{
+ if(e.key==="Enter"&&sel&&$("fecha").value){e.preventDefault();descargar()}
+});
+["mes","anio","renta","sumi"].forEach(i=>$(i).addEventListener("input",refresh));
+$("btn").onclick=descargar;
+
+async function descargar(){
+ try{
+  const r=ROOMS[sel],f=$("fecha").value,mes=+$("mes").value,anio=+$("anio").value;
+  const renta=+$("renta").value,sumi=+$("sumi").value,total=renta+sumi;
+  const ult=new Date(anio,mes+1,0).getDate();
+  const periodo="01 de "+MESES[mes]+" de "+anio+" a "+ult+" de "+MESES[mes]+" de "+anio;
+  const {jsPDF}=window.jspdf;
+  const d=new jsPDF({unit:"pt",format:"a4"});
+  const L=45,W=505,AZ=[221,231,243],AM=[184,204,228],TX=[30,30,30];
+  const t=(s,x,y,o={})=>{d.setFont("helvetica",o.s||"normal");d.setFontSize(o.z||9);d.setTextColor(...TX);d.text(String(s),x,y,o.a?{align:o.a}:undefined)};
+  const box=(x,y,w,h,c)=>{d.setFillColor(...c);d.rect(x,y,w,h,"F")};
+  // cabecera
+  box(L,45,W,22,AM);d.setTextColor(47,95,167);d.setFont("helvetica","bold");d.setFontSize(14);d.text("RECIBO DE ALQUILER",L+4,61);
+  t(anio,L+W-8,60,{s:"bold",z:10,a:"right"});
+  // recibido de / por
+  box(L,80,W,16,AM);box(L,80,W,0,AM);
+  t("Recibido de:",L+4,91,{s:"bold"});t("Recibido por:",L+W/2+4,91,{s:"bold"});
+  box(L,102,W,110,AZ);
+  t("Arrendataria:",L+4,120,{s:"bold"});t(r.n,L+90,120,{s:"bolditalic",z:10});
+  t("Arrendadora:",L+W/2+4,120,{s:"bold"});t(LESSOR.nombre,L+W/2+90,120,{s:"italic"});
+  t("DNI ITA:",L+4,145,{s:"bold"});t(r.dni,L+90,145,{s:"italic"});
+  t("DNI:",L+W/2+4,145,{s:"bold"});t(LESSOR.dni,L+W/2+90,145,{s:"italic"});
+  t("Dirección:",L+4,160,{s:"bold"});t("Dirección:",L+W/2+4,160,{s:"bold"});
+  d.setFont("helvetica","italic");d.setFontSize(9);
+  d.text(d.splitTextToSize(r.dir,150),L+90,172);
+  d.text(d.splitTextToSize(LESSOR.dir,150),L+W/2+90,172);
+  t("Teléfono:",L+4,200,{s:"bold"});t(r.tel,L+90,200,{s:"italic"});
+  t("Teléfono:",L+W/2+4,200,{s:"bold"});t(LESSOR.tel,L+W/2+90,200,{s:"italic"});
+  // importes
+  box(L,222,W,50,AZ);
+  t("Cantidad renta:",L+4,238,{s:"bold"});t(eur(renta),L+150,238,{s:"bolditalic",z:10,a:"right"});t(letras(renta),L+158,238);
+  t("Suministros:",L+4,256,{s:"bold"});t(eur(sumi),L+150,256,{s:"bolditalic",z:10,a:"right"});t(letras(sumi),L+158,256);
+  t("Total:",L+250,256,{z:9});t(eur(total),L+300,256,{s:"bold",z:11});
+  t(letras(total),L+W/2+4,266,{s:"bold"});
+  // concepto
+  box(L,290,W,16,AM);t("Concepto:",L+4,301,{s:"bold"});t("HAB Nº",L+W-6,301,{s:"bold",a:"right"});
+  box(L,306,W,18,AZ);t(r.c,L+10,319,{s:"italic",z:9});t(sel,L+W-20,319,{a:"center"});
+  // periodo
+  box(L,338,W,20,AZ);t("Durante el período:",L+60,352,{s:"bold",z:9});t(periodo,L+175,352,{s:"italic",z:8});
+  t(MESES[mes],L+W-8,352,{s:"bold",z:11,a:"right"});
+  // pago
+  d.setDrawColor(40,40,40);d.rect(L,372,W,22);box(L+W-110,373,109,20,[225,236,200]);
+  t("Método de Pago:",L+4,387,{s:"bold"});t("Transferencia bancaria.",L+85,387,{s:"italic"});
+  t("Fecha de pago:",L+240,387,{s:"bold"});t(fmtF(f),L+345,387);t(eur2(total),L+W-6,387,{s:"bold",z:11,a:"right"});
+  const nom=anio+" "+String(mes+1).padStart(2,"0")+" Alquiler Habitación "+sel+".pdf";
+  d.save(nom);
+  $("msg").textContent="Descargado: "+nom+" (sin firma digital: fírmalo con Autofirma si lo necesitas).";
+ }catch(e){
+  $("msg").textContent=(e&&e.code==="declined")?"Descarga cancelada.":"No se pudo descargar: "+((e&&e.message)||e)
+ }
+}
+</script>
+</body>
+</html>
