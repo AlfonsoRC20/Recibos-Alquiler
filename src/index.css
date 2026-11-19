@@ -10,3 +10,6 @@ button.p{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
 nav{display:flex;gap:8px;margin:12px 0}nav button.on{outline:2px solid var(--ac)}
 .bar{display:flex;justify-content:space-between;align-items:center}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mu{color:var(--mu);font-size:.9rem}.err{color:#c0392b}.item{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--bd)}
+.opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;margin:0 0 10px;padding:14px}
+.chk{display:flex;gap:10px;align-items:center;font-size:1rem;color:var(--tx);margin:10px 0}.chk input{width:auto}
+textarea{width:100%;padding:10px;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px}

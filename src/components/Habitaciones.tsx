@@ -9,12 +9,12 @@ const CAMPOS: [keyof Habitacion, string, string][] = [
   ['inq_nombre', 'Inquilino/a', 'text'], ['inq_dni', 'DNI / NIE', 'text'],
   ['inq_direccion', 'Dirección del inquilino/a', 'text'], ['inq_telefono', 'Teléfono', 'text']]
 
-export default function Habitaciones({ lista, onChange }: { lista: Habitacion[]; onChange: () => void }) {
+export default function Habitaciones({ lista, onChange, propiedadId }: { lista: Habitacion[]; onChange: () => void; propiedadId: string }) {
   const [ed, setEd] = useState<Habitacion | null>(null), [msg, setMsg] = useState('')
   async function guardar() {
     if (!ed) return
     const { id, ...resto } = ed
-    const datos = { ...resto, renta: Number(resto.renta), suministros: Number(resto.suministros) }
+    const datos = { ...resto, propiedad_id: propiedadId, renta: Number(resto.renta), suministros: Number(resto.suministros) }
     const { error } = id ? await supabase.from('habitaciones').update(datos).eq('id', id) : await supabase.from('habitaciones').insert(datos)
     if (error) return setMsg(error.message)
     setEd(null); setMsg(''); onChange()

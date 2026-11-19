@@ -15,7 +15,7 @@ export default function Recibos({ perfil, lista, onEmitido }: { perfil: Perfil; 
     setBusy(true); setMsg('')
     const datos = { fecha, mes, anio, renta: Number(renta), suministros: Number(sumi) }
     const { data, error } = await supabase.from('recibos').insert({
-      habitacion_id: h.id, anio, mes, fecha_pago: fecha, hab_numero: h.numero, concepto: h.concepto,
+      habitacion_id: h.id, propiedad_id: h.propiedad_id, anio, mes, fecha_pago: fecha, hab_numero: h.numero, concepto: h.concepto,
       renta: datos.renta, suministros: datos.suministros, inq_nombre: h.inq_nombre, inq_dni: h.inq_dni,
       inq_direccion: h.inq_direccion, inq_telefono: h.inq_telefono }).select('numero').single()
     if (error) {

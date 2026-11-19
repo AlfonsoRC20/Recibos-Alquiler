@@ -9,6 +9,9 @@ propios datos (seguridad por fila en la base de datos).
 ## Qué hace ahora
 
 - Registro e inicio de sesión (Supabase Auth).
+- Varias propiedades (casas y garajes); dentro de cada una se elige qué gestionar: **Recibos de alquiler**, **Contrato** y **Agua, luz y gas**.
+- Contrato de arrendamiento en PDF a partir de un modelo con los campos editables.
+- Agua, luz y gas: elección por propiedad de qué suministros se gestionan (el seguimiento llegará después).
 - Tus datos como arrendador/a, habitaciones, inquilinos y precios.
 - Recibo en PDF generado en el navegador, con el importe en letras.
 - Archivo con nombre ordenado: `2026 11 Alquiler Habitación 2.pdf`.
@@ -16,7 +19,7 @@ propios datos (seguridad por fila en la base de datos).
 ## Puesta en marcha
 
 1. Crea un proyecto gratuito en [supabase.com](https://supabase.com).
-2. En **SQL Editor**, ejecuta, por este orden y una sola vez cada uno: `supabase/schema.sql`, `supabase/002_recibos.sql` y `supabase/003_quitar_anulados.sql`.
+2. En **SQL Editor**, ejecuta, por este orden y una sola vez cada uno: `supabase/schema.sql`, `002_recibos.sql`, `003_quitar_anulados.sql` y `004_propiedades.sql` (todos en la carpeta `supabase/`).
 3. En **Project Settings → API**, copia la URL y la clave `anon` (pública).
 4. `cp .env.example .env.local` y rellena los dos valores.
 5. `npm install` y `npm run dev`.
