@@ -9,17 +9,20 @@ propios datos (seguridad por fila en la base de datos).
 ## Qué hace ahora
 
 - Registro e inicio de sesión (Supabase Auth).
-- Varias propiedades (casas y garajes); dentro de cada una se elige qué gestionar: **Recibos de alquiler**, **Contrato** y **Agua, luz y gas**.
+- Varias propiedades (casas y garajes); dentro de cada una se elige qué gestionar.
+- **Casas:** Recibos de alquiler, Contrato y Agua, luz y gas.
+- **Garajes:** gestión propia de **Plaza de garaje** con precio mensual, fecha de pago e IPC; sin contrato ni suministros.
 - Contrato de arrendamiento en PDF a partir de un modelo con los campos editables.
 - Agua, luz y gas: elección por propiedad de qué suministros se gestionan (el seguimiento llegará después).
 - Tus datos como arrendador/a, habitaciones, inquilinos y precios.
 - Recibo en PDF generado en el navegador, con el importe en letras.
+- **Cuadrícula mensual de pagos** por habitación, con acceso a los recibos activos, anulados y quitados del mes elegido.
 - Archivo con nombre ordenado: `2026 11 Alquiler Habitación 2.pdf`.
 
 ## Puesta en marcha
 
 1. Crea un proyecto gratuito en [supabase.com](https://supabase.com).
-2. En **SQL Editor**, ejecuta, por este orden y una sola vez cada uno: `supabase/schema.sql`, `002_recibos.sql`, `003_quitar_anulados.sql` y `004_propiedades.sql` (todos en la carpeta `supabase/`).
+2. En **SQL Editor**, ejecuta, por este orden y una sola vez cada uno: `supabase/schema.sql`, `002_recibos.sql`, `003_quitar_anulados.sql`, `004_propiedades.sql` y `005_garajes_pagos.sql` (todos en la carpeta `supabase/`).
 3. En **Project Settings → API**, copia la URL y la clave `anon` (pública).
 4. `cp .env.example .env.local` y rellena los dos valores.
 5. `npm install` y `npm run dev`.
@@ -38,9 +41,9 @@ por correo mientras pruebas.
 ## Estructura
 
 ```
-src/lib/        letras, pdf, cliente de Supabase
-src/components/ Login, Perfil, Habitaciones, Recibos
-supabase/       Esquema SQL con RLS
+src/lib/        letras, PDF de recibo, PDF de plaza de garaje, contrato y cliente de Supabase
+src/components/ Login, Perfil, Propiedades, Habitaciones, Recibos, Pagos, Historial, Contrato, PlazaGaraje
+supabase/       Esquema SQL con RLS y migraciones 002-005
 legacy/fase0/   Versión inicial sin servidor (datos de ejemplo)
 ```
 

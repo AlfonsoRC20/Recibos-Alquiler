@@ -21,32 +21,42 @@ vi.mock('./lib/supabase', () => {
 import App from './App'
 
 const CASA = '11111111-1111-1111-1111-111111111111', GARAJE = '22222222-2222-2222-2222-222222222222'
-const prop = (id: string, tipo: string, nombre: string) => ({ id, tipo, nombre, calle: 'calle X 1', codigo_postal: '41001', ciudad: 'Sevilla', provincia: 'Sevilla', gestiona_agua: false, gestiona_luz: true, gestiona_gas: false })
+const prop = (id: string, tipo: string, nombre: string) => ({ id, tipo, nombre, calle: 'Calle prueba prueba nº 1', codigo_postal: '00000', ciudad: 'Ciudad', provincia: 'Provincia', gestiona_agua: false, gestiona_luz: true, gestiona_gas: false })
 
 beforeEach(() => {
   h.llamadas.length = 0; location.hash = ''
   h.datos = { perfiles: { nombre: 'Ana', dni: '1', direccion: 'x', telefono: '6', iban: 'ES00', banco: 'B' },
-    propiedades: [prop(CASA, 'casa', 'Arjona'), prop(GARAJE, 'garaje', 'Garaje 5')], habitaciones: [], recibos: [] }
+    propiedades: [prop(CASA, 'casa', 'Vivienda de prueba'), prop(GARAJE, 'garaje', 'Garaje 5')],
+    habitaciones: [], recibos: [], pagos_habitacion: [], recibos_garaje: [] }
 })
 afterEach(cleanup)
 
 test('tras iniciar sesión se elige propiedad y hay botón para crear', async () => {
   render(<App />)
   expect(await screen.findByText('¿Qué propiedad quieres gestionar?')).toBeTruthy()
-  expect(screen.getByText(/Arjona/)).toBeTruthy(); expect(screen.getByText(/Garaje 5/)).toBeTruthy()
+  expect(screen.getByText(/Vivienda de prueba/)).toBeTruthy(); expect(screen.getByText(/Garaje 5/)).toBeTruthy()
   fireEvent.click(screen.getByText('Crear propiedad'))
   expect(await screen.findByText('Nueva propiedad')).toBeTruthy()
 })
 test('una casa ofrece Recibos, Contrato y Agua, luz y gas', async () => {
-  render(<App />); fireEvent.click(await screen.findByText(/Arjona/))
+  render(<App />); fireEvent.click(await screen.findByText(/Vivienda de prueba/))
   expect(await screen.findByText('Recibos de alquiler')).toBeTruthy()
   expect(screen.getByText('Contrato')).toBeTruthy(); expect(screen.getByText('Agua, luz y gas')).toBeTruthy()
   expect(screen.getByText('Gestionas: Luz')).toBeTruthy()
 })
-test('un garaje NO ofrece Agua, luz y gas', async () => {
+test('un garaje ofrece Plaza de garaje y no contrato ni suministros', async () => {
   location.hash = `/${GARAJE}/menu`; render(<App />)
-  expect(await screen.findByText('Recibos de alquiler')).toBeTruthy()
-  expect(screen.getByText('Contrato')).toBeTruthy(); expect(screen.queryByText('Agua, luz y gas')).toBeNull()
+  expect(await screen.findByText('Plaza de garaje')).toBeTruthy()
+  expect(screen.queryByText('Recibos de alquiler')).toBeNull()
+  expect(screen.queryByText('Contrato')).toBeNull()
+  expect(screen.queryByText('Agua, luz y gas')).toBeNull()
+})
+test('la plaza de garaje abre su formulario de precio, fecha e IPC', async () => {
+  location.hash = `/${GARAJE}/plaza`; render(<App />)
+  expect(await screen.findByText(/Plaza de garaje · Garaje 5/)).toBeTruthy()
+  expect(screen.getByLabelText('Fecha de pago')).toBeTruthy()
+  expect(screen.getByLabelText('Precio mensual (€)')).toBeTruthy()
+  expect(screen.getByLabelText('IPC aplicado (%)')).toBeTruthy()
 })
 test('Agua, luz y gas guarda los suministros elegidos de la propiedad', async () => {
   location.hash = `/${CASA}/alg`; render(<App />)
@@ -54,14 +64,23 @@ test('Agua, luz y gas guarda los suministros elegidos de la propiedad', async ()
   fireEvent.click(screen.getByText('Guardar'))
   await waitFor(() => expect(h.llamadas[h.llamadas.length - 1]).toEqual({ t: 'propiedades', op: 'update', v: { gestiona_agua: true, gestiona_luz: false, gestiona_gas: true } }))
 })
-test('el contrato se abre con servicios según la propiedad y pide los datos que faltan', async () => {
+test('el contrato se abre vacío, sin valores de ejemplo, y pide los datos que faltan', async () => {
   location.hash = `/${CASA}/contrato`; render(<App />)
-  expect(await screen.findByText(/Contrato de arrendamiento · Arjona/)).toBeTruthy()
-  expect((screen.getByLabelText('Servicios independientes de la renta') as HTMLInputElement).value).toBe('Electricidad e Internet')
+  expect(await screen.findByText(/Contrato de arrendamiento · Vivienda de prueba/)).toBeTruthy()
+  expect((screen.getByLabelText('Servicios independientes de la renta') as HTMLInputElement).value).toBe('')
+  expect((screen.getByLabelText('Nacionalidad del DNI') as HTMLInputElement).value).toBe('')
   expect(screen.getByText(/Falta:/)).toBeTruthy()
   expect((screen.getByText('Descargar contrato PDF') as HTMLButtonElement).disabled).toBe(true)
 })
-test('Recibos de alquiler sigue mostrando sus pestañas', async () => {
+test('Recibos de alquiler muestra las pestañas de pagos e historial', async () => {
   location.hash = `/${CASA}/recibos`; render(<App />)
-  expect(await screen.findByText('Historial')).toBeTruthy(); expect(screen.getByText('Habitaciones')).toBeTruthy()
+  expect(await screen.findByText('Pagos')).toBeTruthy()
+  expect(screen.getByText('Historial')).toBeTruthy(); expect(screen.getByText('Habitaciones')).toBeTruthy()
+})
+test('la cuadrícula de pagos muestra los meses y permite marcar una habitación', async () => {
+  h.datos.habitaciones = [{ id: 'h1', numero: '1', concepto: '', renta: 500, suministros: 50, inq_nombre: 'Inquilina', inq_dni: '', inq_direccion: '', inq_telefono: '' }]
+  location.hash = `/${CASA}/recibos`; render(<App />)
+  fireEvent.click(await screen.findByText('Pagos'))
+  expect(await screen.findByText(/Cuadrícula de pagos/)).toBeTruthy()
+  expect(screen.getByLabelText(/Marcar pagado Habitación 1, enero \d{4}/)).toBeTruthy()
 })

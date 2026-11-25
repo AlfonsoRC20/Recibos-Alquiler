@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { configured, supabase } from './lib/supabase'
-import type { Habitacion, Perfil, Propiedad, Recibo } from './types'
+import type { Habitacion, PagoHabitacion, Perfil, Propiedad, Recibo, ReciboGaraje } from './types'
 import Login from './components/Login'
 import PerfilForm from './components/Perfil'
 import Propiedades from './components/Propiedades'
@@ -10,6 +10,7 @@ import PropiedadMenu from './components/PropiedadMenu'
 import SeccionRecibos from './components/SeccionRecibos'
 import Contrato from './components/Contrato'
 import Alg from './components/Alg'
+import PlazaGaraje from './components/PlazaGaraje'
 
 const PERFIL_VACIO: Perfil = { nombre: '', dni: '', direccion: '', telefono: '', iban: '', banco: '' }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -24,7 +25,9 @@ function leerRuta(): Ruta {
 export default function App() {
   const [session, setSession] = useState<Session | null>(null), [listo, setListo] = useState(false)
   const [perfil, setPerfil] = useState<Perfil>(PERFIL_VACIO), [props, setProps] = useState<Propiedad[]>([]), [cargadas, setCargadas] = useState(false)
-  const [habs, setHabs] = useState<Habitacion[]>([]), [recs, setRecs] = useState<Recibo[]>([]), [err, setErr] = useState('')
+  const [habs, setHabs] = useState<Habitacion[]>([]), [recs, setRecs] = useState<Recibo[]>([])
+  const [pagos, setPagos] = useState<PagoHabitacion[]>([]), [recsGaraje, setRecsGaraje] = useState<ReciboGaraje[]>([])
+  const [err, setErr] = useState('')
   const [ruta, setRuta] = useState<Ruta>(leerRuta)
 
   useEffect(() => { const f = () => setRuta(leerRuta()); window.addEventListener('hashchange', f); return () => window.removeEventListener('hashchange', f) }, [])
@@ -42,18 +45,23 @@ export default function App() {
       supabase.from('perfiles').select('nombre,dni,direccion,telefono,iban,banco').maybeSingle(),
       supabase.from('propiedades').select('*').order('created_at')])
     const e = p.error ?? pr.error
-    setErr(e ? 'Si acabas de actualizar la aplicación, falta ejecutar supabase/004_propiedades.sql en Supabase. ' + e.message : '')
+    setErr(e ? 'Si acabas de actualizar la aplicación, ejecuta las migraciones pendientes de supabase/ (004_propiedades.sql y 005_garajes_pagos.sql). ' + e.message : '')
     setPerfil((p.data as Perfil) ?? PERFIL_VACIO); setProps((pr.data as Propiedad[]) ?? []); setCargadas(true)
   }, [])
   const cargarProp = useCallback(async (id: string) => {
-    const [h, r] = await Promise.all([
+    const [h, r, pg, rg] = await Promise.all([
       supabase.from('habitaciones').select('*').eq('propiedad_id', id).order('numero'),
-      supabase.from('recibos').select('*').eq('propiedad_id', id).order('anio', { ascending: false }).order('secuencia', { ascending: false })])
-    if (h.error || r.error) setErr((h.error ?? r.error)!.message)
+      supabase.from('recibos').select('*').eq('propiedad_id', id).order('anio', { ascending: false }).order('secuencia', { ascending: false }),
+      supabase.from('pagos_habitacion').select('*').eq('propiedad_id', id),
+      supabase.from('recibos_garaje').select('*').eq('propiedad_id', id).order('anio', { ascending: false }).order('mes', { ascending: false })])
+    const e = h.error ?? r.error ?? pg.error ?? rg.error
+    if (e) setErr('Si acabas de actualizar la aplicación, ejecuta supabase/005_garajes_pagos.sql en Supabase. ' + e.message)
+    else setErr('')
     setHabs((h.data as Habitacion[]) ?? []); setRecs((r.data as Recibo[]) ?? [])
+    setPagos((pg.data as PagoHabitacion[]) ?? []); setRecsGaraje((rg.data as ReciboGaraje[]) ?? [])
   }, [])
-  useEffect(() => { if (session) void cargarGlobal(); else { setPerfil(PERFIL_VACIO); setProps([]); setHabs([]); setRecs([]); setCargadas(false) } }, [session, cargarGlobal])
-  useEffect(() => { if (session && ruta.id) void cargarProp(ruta.id); else { setHabs([]); setRecs([]) } }, [session, ruta.id, cargarProp])
+  useEffect(() => { if (session) void cargarGlobal(); else { setPerfil(PERFIL_VACIO); setProps([]); setHabs([]); setRecs([]); setPagos([]); setRecsGaraje([]); setCargadas(false) } }, [session, cargarGlobal])
+  useEffect(() => { if (session && ruta.id) void cargarProp(ruta.id); else { setHabs([]); setRecs([]); setPagos([]); setRecsGaraje([]) } }, [session, ruta.id, cargarProp])
 
   if (!listo) return null
   if (!configured) return <main><div className="card"><h1>Falta configurar Supabase</h1>
@@ -62,6 +70,7 @@ export default function App() {
 
   const p = ruta.id ? props.find(x => x.id === ruta.id) : undefined
   const recargarTodo = async () => { await cargarGlobal(); if (ruta.id) await cargarProp(ruta.id) }
+  const soloCasas = <div className="card"><p>Esta sección solo está disponible para casas o viviendas.</p><button onClick={() => ir(p?.id ?? null)}>Volver</button></div>
   let vista
   if (ruta.sec === 'datos') vista = <PerfilForm key={JSON.stringify(perfil)} perfil={perfil} userId={session.user.id} onSaved={cargarGlobal} />
   else if (!ruta.id) vista = <Propiedades lista={props} onAbrir={async id => { await cargarGlobal(); ir(id) }} />
@@ -71,11 +80,16 @@ export default function App() {
     <div>
       <div className="bar"><button onClick={() => ir(null)}>← Propiedades</button>{ruta.sec !== 'menu' && <button onClick={() => ir(p.id)}>← {p.nombre}</button>}</div>
       <p />
-      {ruta.sec === 'recibos' && <SeccionRecibos perfil={perfil} habs={habs} recs={recs} propiedadId={p.id} onCambio={() => cargarProp(p.id)} />}
-      {ruta.sec === 'contrato' && <Contrato key={p.id} perfil={perfil} p={p} habs={habs} />}
-      {ruta.sec === 'alg' && (p.tipo === 'casa' ? <Alg key={p.id} p={p} onGuardado={cargarGlobal} /> : <div className="card"><p>Agua, luz y gas solo está disponible para casas.</p></div>)}
+      {ruta.sec === 'recibos' && (p.tipo === 'casa'
+        ? <SeccionRecibos perfil={perfil} habs={habs} recs={recs} pagos={pagos} propiedadId={p.id} onCambio={() => cargarProp(p.id)} />
+        : soloCasas)}
+      {ruta.sec === 'plaza' && (p.tipo === 'garaje'
+        ? <PlazaGaraje perfil={perfil} p={p} recibos={recsGaraje} onCambio={() => cargarProp(p.id)} />
+        : <div className="card"><p>La plaza de garaje solo está disponible para garajes.</p><button onClick={() => ir(p.id)}>Volver</button></div>)}
+      {ruta.sec === 'contrato' && (p.tipo === 'casa' ? <Contrato key={p.id} perfil={perfil} p={p} habs={habs} /> : soloCasas)}
+      {ruta.sec === 'alg' && (p.tipo === 'casa' ? <Alg key={p.id} p={p} onGuardado={cargarGlobal} /> : soloCasas)}
       {ruta.sec === 'editar' && <PropiedadForm key={p.id} inicial={p} onGuardada={async () => { await recargarTodo(); ir(p.id) }} onCancelar={() => ir(p.id)} onEliminada={async () => { await cargarGlobal(); ir(null) }} />}
-      {!['recibos', 'contrato', 'alg', 'editar'].includes(ruta.sec) && <PropiedadMenu p={p} onIr={sec => ir(p.id, sec)} />}
+      {!['recibos', 'plaza', 'contrato', 'alg', 'editar'].includes(ruta.sec) && <PropiedadMenu p={p} onIr={sec => ir(p.id, sec)} />}
     </div>)
   return (
     <main>

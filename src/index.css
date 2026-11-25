@@ -13,3 +13,11 @@ nav{display:flex;gap:8px;margin:12px 0}nav button.on{outline:2px solid var(--ac)
 .opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;margin:0 0 10px;padding:14px}
 .chk{display:flex;gap:10px;align-items:center;font-size:1rem;color:var(--tx);margin:10px 0}.chk input{width:auto}
 textarea{width:100%;padding:10px;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px}
+.tabla-scroll{overflow-x:auto;margin:10px 0}
+table.pagos{border-collapse:collapse;width:100%;min-width:680px;font-size:.8rem}
+table.pagos th,table.pagos td{border:1px solid var(--bd);padding:4px;text-align:center}
+table.pagos thead th:first-child,table.pagos tbody th{text-align:left;position:sticky;left:0;background:var(--card);min-width:118px;z-index:1}
+table.pagos thead button{padding:4px 6px;font-size:.75rem;width:100%}
+table.pagos thead button.on{outline:2px solid var(--ac);font-weight:700}
+table.pagos td button{width:100%;min-width:28px;height:28px;padding:0;line-height:1}
+table.pagos td button.pagado{background:#2e7d32;border-color:#2e7d32;color:#fff;font-weight:700}

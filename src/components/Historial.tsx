@@ -5,10 +5,12 @@ import { MESES, type Perfil, type Recibo } from '../types'
 
 const eur = (n: number) => Number(n).toFixed(2).replace('.', ',') + ' €'
 
-export default function Historial({ perfil, lista, onChange }: { perfil: Perfil; lista: Recibo[]; onChange: () => void }) {
-  const [msg, setMsg] = useState(''), [verQuitados, setVerQuitados] = useState(false)
-  const quitados = lista.filter(r => r.oculto).length
-  const visibles = lista.filter(r => verQuitados || !r.oculto)
+export default function Historial({ perfil, lista, onChange, filtro, mostrarQuitados = false, titulo = 'Historial de recibos' }:
+  { perfil: Perfil; lista: Recibo[]; onChange: () => void; filtro?: { anio: number; mes: number }; mostrarQuitados?: boolean; titulo?: string }) {
+  const [msg, setMsg] = useState(''), [verQuitados, setVerQuitados] = useState(mostrarQuitados)
+  const base = filtro ? lista.filter(r => r.anio === filtro.anio && r.mes === filtro.mes) : lista
+  const quitados = base.filter(r => r.oculto).length
+  const visibles = base.filter(r => verQuitados || !r.oculto)
   // ¿hay otro recibo emitido de la misma habitación y mes? (impide desanular)
   const conflicto = (r: Recibo) => r.habitacion_id !== null &&
     lista.some(x => x.id !== r.id && x.estado === 'emitido' && x.habitacion_id === r.habitacion_id && x.anio === r.anio && x.mes === r.mes)
@@ -32,8 +34,9 @@ export default function Historial({ perfil, lista, onChange }: { perfil: Perfil;
     && cambiar(r, { oculto: true }, `Recibo ${r.numero} quitado de la lista.`)
 
   return (
-    <div className="card"><h2>Historial de recibos</h2>
-      {visibles.length === 0 && <p className="mu">{lista.length === 0 ? 'Aún no has emitido ningún recibo.' : 'No hay recibos que mostrar.'}</p>}
+    <div className="card"><h2>{titulo}</h2>
+      {filtro && <p className="mu">{MESES[filtro.mes]} {filtro.anio} · se muestran también los recibos anulados y quitados.</p>}
+      {visibles.length === 0 && <p className="mu">{base.length === 0 ? 'No hay recibos en ese mes.' : 'No hay recibos que mostrar.'}</p>}
       {visibles.map(r => {
         const bloqueado = r.estado === 'anulado' && conflicto(r)
         return (

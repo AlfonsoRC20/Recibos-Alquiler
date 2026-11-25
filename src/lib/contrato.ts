@@ -148,32 +148,3 @@ export function nombreContrato(d: DatosContrato, propiedad: string) {
   const primer = d.arrendataria.nombre.trim().split(/\s+/)[0] ?? ''
   return `${d.inicio.split('-').join(' ')} ARRENDAMIENTO DE VIVIENDA ${propiedad} ${primer} Habitación ${d.habitacion.numero}.pdf`.replace(/[\\/:*?"<>|]/g, '')
 }
-
-export const INVENTARIO_EJEMPLO = `# AIRE ACONDICIONADO: nuevo en 2015 y exterior en 2018 (3.700 €)
-# COCINA COMPLETA AMUEBLADA con electrodomésticos:
-Frigorífico Bosch (nuevo de octubre de 2022): 530 €
-Congelador de cajones
-Lavadora Bosch (nueva de 02/05/2014): 349 €
-Lavavajillas, horno, vitrocerámica, campana y microondas
-Termo (nuevo de septiembre de 2023): 1.086 €
-Mesa de cocina tablero y patas (21,95 + 17,95): 39,90 € y 4 sillas
-# SALÓN
-Estantería Enetri (IKEA): 49,95 €
-Mesa comedor Bjursta Mesco (IKEA): 298 €
-6 sillas de comedor (IKEA): 69 x 6 = 414 €
-Aparador (IKEA) de 6 huecos más cajón de tela negro
-2 mesas de TV
-2 sillones Pello Siln Holm (IKEA) a 25 €: 50 €
-Sofá azul chaise-longue: 900 €
-Televisión OKI de 32'' (Carrefour 2010): 299 €
-# DORMITORIO (revisa y sustituye por el de esta habitación)
-Cama de 135 cm (somier y colchón), 4 almohadas, funda de colchón y juego de cama completo
-Edredón y fundas nórdicas, cajonera interior ropero, cortinas y perchas
-Cómoda y 2 mesitas de noche, mesa de estudio, balda de pared, silla giratoria y papelera
-# ENTRADA
-Mueble de entrada, balda, perchero, papelera paragüero, caja tapa fusibles
-Dos tendederos portátiles, 3 ventiladores de pie, escalera de 3 peldaños
-# MENAJE
-Batidora Taurus, tostadora Bosch, tabla de planchar y plancha
-Platos (llanos, hondos y pequeños), vasos y tazas, cubiertos, sartenes, cazos y ollas
-Paños de cocina, cubo de basura y avíos de limpieza (escoba, fregona, recogedor y cubo)`

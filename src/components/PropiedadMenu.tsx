@@ -10,9 +10,11 @@ export default function PropiedadMenu({ p, onIr }: { p: Propiedad; onIr: (sec: s
       <h2>{p.tipo === 'casa' ? '🏠' : '🚗'} {p.nombre}</h2>
       <p className="mu">{[p.calle, [p.codigo_postal, p.ciudad].filter(Boolean).join(' '), p.provincia].filter(Boolean).join(' · ') || 'Sin dirección'}</p>
       <p>¿Qué quieres gestionar?</p>
-      <button className="opt" onClick={() => onIr('recibos')}><b>Recibos de alquiler</b><span className="mu">Habitaciones, recibos e historial</span></button>
-      <button className="opt" onClick={() => onIr('contrato')}><b>Contrato</b><span className="mu">Genera el contrato de arrendamiento en PDF</span></button>
-      {p.tipo === 'casa' && <button className="opt" onClick={() => onIr('alg')}><b>Agua, luz y gas</b><span className="mu">{resumenAlg(p)}</span></button>}
+      {p.tipo === 'casa' ? <>
+        <button className="opt" onClick={() => onIr('recibos')}><b>Recibos de alquiler</b><span className="mu">Habitaciones, recibos, cuadrícula de pagos e historial</span></button>
+        <button className="opt" onClick={() => onIr('contrato')}><b>Contrato</b><span className="mu">Genera el contrato de arrendamiento en PDF</span></button>
+        <button className="opt" onClick={() => onIr('alg')}><b>Agua, luz y gas</b><span className="mu">{resumenAlg(p)}</span></button>
+      </> : <button className="opt" onClick={() => onIr('plaza')}><b>Plaza de garaje</b><span className="mu">Precio, fecha de pago, IPC y recibo</span></button>}
       <button onClick={() => onIr('editar')}>Editar datos de la propiedad</button>
     </div>
   )

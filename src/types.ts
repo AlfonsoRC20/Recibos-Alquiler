@@ -13,3 +13,12 @@ export type Propiedad = {
   id: string; tipo: 'casa' | 'garaje'; nombre: string; calle: string; codigo_postal: string; ciudad: string; provincia: string
   gestiona_agua: boolean; gestiona_luz: boolean; gestiona_gas: boolean
 }
+// Cuadrícula de pagos: una fila por habitación y mes. La ausencia de fila equivale a «no pagado».
+export type PagoHabitacion = {
+  id?: string; propiedad_id: string; habitacion_id: string; anio: number; mes: number; pagado: boolean; fecha_pago?: string | null
+}
+// Recibos de una plaza de garaje/aparcamiento: precio, fecha de pago e IPC aplicado.
+export type ReciboGaraje = {
+  id: string; propiedad_id: string; anio: number; mes: number; fecha_pago: string
+  precio: number; ipc: number; concepto: string
+}

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Perfil } from '../types'
 
-const CAMPOS: [keyof Perfil, string][] = [['nombre', 'Nombre completo'], ['dni', 'DNI'], ['direccion', 'Dirección'], ['telefono', 'Teléfono'], ['iban', 'IBAN (se usa en los contratos)'], ['banco', 'Entidad bancaria y localidad (ej.: La Caixa, en Camas (Sevilla))']]
+const CAMPOS: [keyof Perfil, string][] = [['nombre', 'Nombre completo'], ['dni', 'DNI'], ['direccion', 'Dirección'], ['telefono', 'Teléfono'], ['iban', 'IBAN (se usa en los contratos)'], ['banco', 'Entidad bancaria y localidad']]
 export default function PerfilForm({ perfil, userId, onSaved }: { perfil: Perfil; userId: string; onSaved: () => void }) {
   const [p, setP] = useState(perfil), [msg, setMsg] = useState('')
   async function guardar() {

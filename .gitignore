@@ -8,6 +8,7 @@ datos-reales/
 .env
 .env.*
 !.env.example
+vercel-recovery-codes*.txt
 
 # --- Node ---
 node_modules/
