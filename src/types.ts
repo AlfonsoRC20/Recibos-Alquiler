@@ -22,3 +22,12 @@ export type ReciboGaraje = {
   id: string; propiedad_id: string; anio: number; mes: number; fecha_pago: string
   precio: number; ipc: number; concepto: string
 }
+// Facturas reales de suministros (agua, luz y gas) que llegan a la vivienda.
+export type TipoSuministro = 'agua' | 'luz' | 'gas'
+export type FacturaSuministro = {
+  id?: string; propiedad_id: string; tipo: TipoSuministro; proveedor: string
+  anio: number; mes: number; importe: number
+  periodo_desde?: string | null; periodo_hasta?: string | null
+  fecha_notificacion?: string | null; fecha_cobro?: string | null; nota?: string
+}
+export const NOMBRE_SUMINISTRO: Record<TipoSuministro, string> = { agua: 'Agua', luz: 'Luz', gas: 'Gas' }

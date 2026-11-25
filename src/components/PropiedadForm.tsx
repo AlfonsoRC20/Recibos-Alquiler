@@ -7,7 +7,7 @@ type Form = Omit<Campos, 'tipo'> & { tipo: Propiedad['tipo'] | '' }
 const VACIA: Form = { tipo: '', nombre: '', calle: '', codigo_postal: '', ciudad: '', provincia: '' }
 
 export default function PropiedadForm({ inicial, onGuardada, onCancelar, onEliminada }:
-  { inicial?: Propiedad; onGuardada: (id: string) => void; onCancelar?: () => void; onEliminada?: () => void }) {
+  { inicial?: Propiedad; onGuardada: (id: string, tipo?: Propiedad['tipo']) => void; onCancelar?: () => void; onEliminada?: () => void }) {
   const [f, setF] = useState<Form>(inicial ?? VACIA), [msg, setMsg] = useState(''), [busy, setBusy] = useState(false)
   const set = (k: keyof Form, v: string) => setF({ ...f, [k]: v })
   async function guardar() {
@@ -16,10 +16,10 @@ export default function PropiedadForm({ inicial, onGuardada, onCancelar, onElimi
     if (inicial) {
       const { tipo: _t, ...resto } = f
       const { error } = await supabase.from('propiedades').update(resto).eq('id', inicial.id)
-      if (error) setMsg(error.message); else onGuardada(inicial.id)
+      if (error) setMsg(error.message); else onGuardada(inicial.id, inicial.tipo)
     } else {
       const { data, error } = await supabase.from('propiedades').insert(f).select('id').single()
-      if (error) setMsg(error.message); else onGuardada(data.id)
+      if (error) setMsg(error.message); else onGuardada(data.id, f.tipo as Propiedad['tipo'])
     }
     setBusy(false)
   }

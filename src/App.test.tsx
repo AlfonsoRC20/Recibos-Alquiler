@@ -27,7 +27,7 @@ beforeEach(() => {
   h.llamadas.length = 0; location.hash = ''
   h.datos = { perfiles: { nombre: 'Ana', dni: '1', direccion: 'x', telefono: '6', iban: 'ES00', banco: 'B' },
     propiedades: [prop(CASA, 'casa', 'Vivienda de prueba'), prop(GARAJE, 'garaje', 'Garaje 5')],
-    habitaciones: [], recibos: [], pagos_habitacion: [], recibos_garaje: [] }
+    habitaciones: [], recibos: [], pagos_habitacion: [], recibos_garaje: [], facturas_suministros: [] }
 })
 afterEach(cleanup)
 
@@ -41,12 +41,20 @@ test('tras iniciar sesión se elige propiedad y hay botón para crear', async ()
 test('una casa ofrece Recibos, Contrato y Agua, luz y gas', async () => {
   render(<App />); fireEvent.click(await screen.findByText(/Vivienda de prueba/))
   expect(await screen.findByText('Recibos de alquiler')).toBeTruthy()
+  expect(screen.getByText('Cuadrícula de pagos')).toBeTruthy()
   expect(screen.getByText('Contrato')).toBeTruthy(); expect(screen.getByText('Agua, luz y gas')).toBeTruthy()
   expect(screen.getByText('Gestionas: Luz')).toBeTruthy()
 })
+test('al abrir un garaje se va directamente a la plaza de garaje', async () => {
+  render(<App />); fireEvent.click(await screen.findByText(/Garaje 5/))
+  expect(await screen.findByText(/Plaza de garaje · Garaje 5/)).toBeTruthy()
+  expect(screen.queryByText('Recibos de alquiler')).toBeNull()
+  expect(screen.queryByText('Contrato')).toBeNull()
+  expect(screen.queryByText('Agua, luz y gas')).toBeNull()
+})
 test('un garaje ofrece Plaza de garaje y no contrato ni suministros', async () => {
   location.hash = `/${GARAJE}/menu`; render(<App />)
-  expect(await screen.findByText('Plaza de garaje')).toBeTruthy()
+  expect(await screen.findByText(/Plaza de garaje · Garaje 5/)).toBeTruthy()
   expect(screen.queryByText('Recibos de alquiler')).toBeNull()
   expect(screen.queryByText('Contrato')).toBeNull()
   expect(screen.queryByText('Agua, luz y gas')).toBeNull()
@@ -64,6 +72,19 @@ test('Agua, luz y gas guarda los suministros elegidos de la propiedad', async ()
   fireEvent.click(screen.getByText('Guardar'))
   await waitFor(() => expect(h.llamadas[h.llamadas.length - 1]).toEqual({ t: 'propiedades', op: 'update', v: { gestiona_agua: true, gestiona_luz: false, gestiona_gas: true } }))
 })
+test('Agua, luz y gas registra facturas y muestra el resumen mensual', async () => {
+  const anio = new Date().getFullYear(), mes = new Date().getMonth()
+  h.datos.habitaciones = [
+    { id: 'h1', numero: '1', concepto: '', renta: 500, suministros: 60, inq_nombre: 'Inquilina Uno', inq_dni: '', inq_direccion: '', inq_telefono: '' },
+    { id: 'h2', numero: '2', concepto: '', renta: 500, suministros: 60, inq_nombre: 'Inquilina Dos', inq_dni: '', inq_direccion: '', inq_telefono: '' },
+  ]
+  h.datos.facturas_suministros = [{ id: 'f1', propiedad_id: CASA, tipo: 'agua', proveedor: 'EMASESA', anio, mes, importe: 78.75, nota: '' }]
+  location.hash = `/${CASA}/alg`; render(<App />)
+  expect(await screen.findByText('Facturas de suministros')).toBeTruthy()
+  expect(screen.getByText('Cobrado')).toBeTruthy()
+  expect(screen.getByText('Total ' + anio)).toBeTruthy()
+  expect(screen.getByLabelText('Importe de la factura (€)')).toBeTruthy()
+})
 test('el contrato se abre vacío, sin valores de ejemplo, y pide los datos que faltan', async () => {
   location.hash = `/${CASA}/contrato`; render(<App />)
   expect(await screen.findByText(/Contrato de arrendamiento · Vivienda de prueba/)).toBeTruthy()
@@ -72,15 +93,15 @@ test('el contrato se abre vacío, sin valores de ejemplo, y pide los datos que f
   expect(screen.getByText(/Falta:/)).toBeTruthy()
   expect((screen.getByText('Descargar contrato PDF') as HTMLButtonElement).disabled).toBe(true)
 })
-test('Recibos de alquiler muestra las pestañas de pagos e historial', async () => {
+test('Recibos de alquiler mantiene sus pestañas propias', async () => {
   location.hash = `/${CASA}/recibos`; render(<App />)
-  expect(await screen.findByText('Pagos')).toBeTruthy()
+  expect(await screen.findByText('Recibos')).toBeTruthy()
   expect(screen.getByText('Historial')).toBeTruthy(); expect(screen.getByText('Habitaciones')).toBeTruthy()
+  expect(screen.queryByText('Cuadrícula de pagos')).toBeNull()
 })
-test('la cuadrícula de pagos muestra los meses y permite marcar una habitación', async () => {
+test('la cuadrícula de pagos es una sección aparte y permite marcar una habitación', async () => {
   h.datos.habitaciones = [{ id: 'h1', numero: '1', concepto: '', renta: 500, suministros: 50, inq_nombre: 'Inquilina', inq_dni: '', inq_direccion: '', inq_telefono: '' }]
-  location.hash = `/${CASA}/recibos`; render(<App />)
-  fireEvent.click(await screen.findByText('Pagos'))
+  location.hash = `/${CASA}/pagos`; render(<App />)
   expect(await screen.findByText(/Cuadrícula de pagos/)).toBeTruthy()
   expect(screen.getByLabelText(/Marcar pagado Habitación 1, enero \d{4}/)).toBeTruthy()
 })

@@ -30,7 +30,7 @@ export default function Pagos({ perfil, habs, recs, pagos, propiedadId, onChange
     else { setMsg(pagado ? `Hab. ${h.numero} · ${MESES[mes]} ${anio} marcado como pendiente.` : `Hab. ${h.numero} · ${MESES[mes]} ${anio} marcado como pagado.`); setMesSel(mes); onChange() }
   }
 
-  if (habs.length === 0) return <div className="card">Primero añade una habitación en la pestaña «Habitaciones».</div>
+  if (habs.length === 0) return <div className="card">Primero añade una habitación en «Recibos de alquiler» → pestaña «Habitaciones».</div>
 
   return (
     <>

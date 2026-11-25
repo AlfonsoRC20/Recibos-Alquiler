@@ -21,3 +21,8 @@ table.pagos thead button{padding:4px 6px;font-size:.75rem;width:100%}
 table.pagos thead button.on{outline:2px solid var(--ac);font-weight:700}
 table.pagos td button{width:100%;min-width:28px;height:28px;padding:0;line-height:1}
 table.pagos td button.pagado{background:#2e7d32;border-color:#2e7d32;color:#fff;font-weight:700}
+table.pagos tbody tr{cursor:pointer}
+table.pagos tr.sel{outline:2px solid var(--ac);outline-offset:-2px}
+table.pagos tfoot th,table.pagos tfoot td{font-weight:700;background:var(--bg)}
+table.pagos td{white-space:nowrap}
+.bar h2{margin:0}

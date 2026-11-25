@@ -6,8 +6,8 @@ import { MESES, type Perfil, type Propiedad, type ReciboGaraje } from '../types'
 
 const eur = (n: number) => n.toFixed(2).replace('.', ',') + ' €'
 
-export default function PlazaGaraje({ perfil, p, recibos, onCambio }:
-  { perfil: Perfil; p: Propiedad; recibos: ReciboGaraje[]; onCambio: () => void }) {
+export default function PlazaGaraje({ perfil, p, recibos, onCambio, onEditar }:
+  { perfil: Perfil; p: Propiedad; recibos: ReciboGaraje[]; onCambio: () => void; onEditar?: () => void }) {
   const [fecha, setFecha] = useState('')
   const [mes, setMes] = useState<number | ''>(''), [anio, setAnio] = useState<number | ''>('')
   const [precio, setPrecio] = useState<number | ''>(''), [ipc, setIpc] = useState<number | ''>('')
@@ -20,7 +20,10 @@ export default function PlazaGaraje({ perfil, p, recibos, onCambio }:
     if (!fecha || mes === '' || anio === '' || precio === '' || busy) return
     setBusy(true); setMsg('')
     const datos = { fecha, mes, anio, precio: Number(precio), ipc: ipc === '' ? 0 : Number(ipc), concepto: 'Alquiler de plaza de garaje' }
-    const { error } = await supabase.from('recibos_garaje').insert({ propiedad_id: p.id, ...datos }).select('id').single()
+    // La tabla usa fecha_pago; «fecha» solo se usa para el PDF.
+    const { error } = await supabase.from('recibos_garaje').insert({
+      propiedad_id: p.id, fecha_pago: fecha, mes, anio, precio: datos.precio, ipc: datos.ipc, concepto: datos.concepto,
+    }).select('id').single()
     if (error) {
       setMsg(error.code === '23505' ? 'Ya hay un recibo de esta plaza para ese mes. Elimínalo antes de emitir otro.' : 'No se pudo guardar el recibo: ' + error.message)
     } else {
@@ -45,7 +48,8 @@ export default function PlazaGaraje({ perfil, p, recibos, onCambio }:
 
   return (
     <div>
-      <div className="card"><h2>Plaza de garaje · {p.nombre}</h2>
+      <div className="card"><div className="bar"><h2>Plaza de garaje · {p.nombre}</h2>
+        {onEditar && <button onClick={onEditar}>Editar propiedad</button>}</div>
         {!perfil.nombre && <p className="err">Completa tus datos en «Mis datos»: aparecerán como arrendador/a.</p>}
         <p className="mu">{p.calle || 'Sin dirección'}{p.ciudad ? `, ${p.ciudad}` : ''}</p>
         <label htmlFor="gf">Fecha de pago</label>
