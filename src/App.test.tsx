@@ -27,7 +27,7 @@ beforeEach(() => {
   h.llamadas.length = 0; location.hash = ''
   h.datos = { perfiles: { nombre: 'Ana', dni: '1', direccion: 'x', telefono: '6', iban: 'ES00', banco: 'B' },
     propiedades: [prop(CASA, 'casa', 'Vivienda de prueba'), prop(GARAJE, 'garaje', 'Garaje 5')],
-    habitaciones: [], recibos: [], pagos_habitacion: [], recibos_garaje: [], facturas_suministros: [] }
+    habitaciones: [], recibos: [], pagos_habitacion: [], recibos_garaje: [] }
 })
 afterEach(cleanup)
 
@@ -71,19 +71,6 @@ test('Agua, luz y gas guarda los suministros elegidos de la propiedad', async ()
   fireEvent.click(await screen.findByLabelText('Agua')); fireEvent.click(screen.getByLabelText('Luz')); fireEvent.click(screen.getByLabelText('Gas'))
   fireEvent.click(screen.getByText('Guardar'))
   await waitFor(() => expect(h.llamadas[h.llamadas.length - 1]).toEqual({ t: 'propiedades', op: 'update', v: { gestiona_agua: true, gestiona_luz: false, gestiona_gas: true } }))
-})
-test('Agua, luz y gas registra facturas y muestra el resumen mensual', async () => {
-  const anio = new Date().getFullYear(), mes = new Date().getMonth()
-  h.datos.habitaciones = [
-    { id: 'h1', numero: '1', concepto: '', renta: 500, suministros: 60, inq_nombre: 'Inquilina Uno', inq_dni: '', inq_direccion: '', inq_telefono: '' },
-    { id: 'h2', numero: '2', concepto: '', renta: 500, suministros: 60, inq_nombre: 'Inquilina Dos', inq_dni: '', inq_direccion: '', inq_telefono: '' },
-  ]
-  h.datos.facturas_suministros = [{ id: 'f1', propiedad_id: CASA, tipo: 'agua', proveedor: 'EMASESA', anio, mes, importe: 78.75, nota: '' }]
-  location.hash = `/${CASA}/alg`; render(<App />)
-  expect(await screen.findByText('Facturas de suministros')).toBeTruthy()
-  expect(screen.getByText('Cobrado')).toBeTruthy()
-  expect(screen.getByText('Total ' + anio)).toBeTruthy()
-  expect(screen.getByLabelText('Importe de la factura (€)')).toBeTruthy()
 })
 test('el contrato se abre vacío, sin valores de ejemplo, y pide los datos que faltan', async () => {
   location.hash = `/${CASA}/contrato`; render(<App />)

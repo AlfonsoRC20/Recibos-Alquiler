@@ -9,7 +9,7 @@
 - [x] **Cuadrícula de pagos.** Sección propia del menú: pagado/pendiente por habitación y mes, con acceso a los recibos del mes (activos, anulados y quitados).
 - [x] **Plaza de garaje.** Precio mensual, fecha de pago, IPC y recibo PDF. Sin contrato ni suministros.
 - [~] **Contrato.** Generación en PDF desde el modelo, con validación de datos críticos. *Pendiente: guardar contratos, parámetros (días de pago, plazos…).*
-- [x] **Agua, luz y gas.** Registro de facturas reales por suministro y mes, comparación con lo cobrado a los inquilinos y resumen mensual en PDF. *Pendiente: repercutir automáticamente el gasto real en los recibos y avisos de vencimiento.*
+- [~] **Agua, luz y gas.** Elección de suministros por propiedad. *Pendiente: seguimiento (cobro compañía, aviso, pago del inquilino).*
 - [ ] **Fase 5.** Editor de plantillas con campos y varios idiomas.
 - [ ] **Fase 6.** RGPD: exportar/borrar cuenta, política de privacidad.
 - [ ] **Fase 7.** Despliegue y documentación con capturas.
