@@ -8,7 +8,7 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Bloquear archivos con datos personales o secretos
         run: |
           bad=$(git ls-files | grep -Ei '(^datos-reales/|vercel-recovery-codes.*\.txt$|\.(pdf|xlsx|xls|docx|zip|csv|pem|key|p12|pfx|jks|keystore|kdbx|dump|sql\.gz|bak|log)$|(^|/)\.env($|\.))' | grep -vE '(^|/)\.env\.example$' || true)
