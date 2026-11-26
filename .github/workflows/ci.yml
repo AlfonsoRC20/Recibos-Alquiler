@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Bloquear archivos con datos personales o secretos
         run: |
-          bad=$(git ls-files | grep -Ei '(^datos-reales/|vercel-recovery-codes.*\.txt$|\.(pdf|xlsx|xls|docx|zip|pem|key|p12|pfx|jks|keystore|kdbx|dump|sql\.gz|bak|log)$|(^|/)\.env($|\.))' | grep -vE '(^|/)\.env\.example$' || true)
+          bad=$(git ls-files | grep -Ei '(^datos-reales/|vercel-recovery-codes.*\.txt$|\.(pdf|xlsx|xls|docx|zip|csv|pem|key|p12|pfx|jks|keystore|kdbx|dump|sql\.gz|bak|log)$|(^|/)\.env($|\.))' | grep -vE '(^|/)\.env\.example$' || true)
           if [ -n "$bad" ]; then echo "Archivos prohibidos en el repositorio:"; echo "$bad"; exit 1; fi
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
