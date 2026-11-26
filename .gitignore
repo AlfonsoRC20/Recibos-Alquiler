@@ -5,10 +5,28 @@ datos-reales/
 *.xls
 *.docx
 *.zip
+*.csv
+*.log
 .env
 .env.*
 !.env.example
 vercel-recovery-codes*.txt
+
+# --- Secretos, claves y volcados ---
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.kdbx
+*.dump
+*.sql.gz
+*.bak
+*.orig
+*.rej
+supabase/.temp/
+.supabase/
 
 # --- Node ---
 node_modules/
