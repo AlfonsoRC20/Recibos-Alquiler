@@ -21,6 +21,7 @@ export default function Alg({ perfil, p, habs, facturas = [], onGuardado }:
     gestiona_agua: p.gestiona_agua, gestiona_luz: p.gestiona_luz, gestiona_gas: p.gestiona_gas,
   })
   const [msg, setMsg] = useState('')
+  const [tab, setTab] = useState<'facturas' | 'resumen' | 'config'>('facturas')
   const [anio, setAnio] = useState(ahora.getFullYear())
   const [mes, setMes] = useState(ahora.getMonth())
   const [tipo, setTipo] = useState<TipoSuministro>('agua')
@@ -86,16 +87,15 @@ export default function Alg({ perfil, p, habs, facturas = [], onGuardado }:
 
   return (
     <div>
-      <div className="card"><h2>Agua, luz y gas · {p.nombre}</h2>
-        <p>Marca qué suministros tiene la vivienda. Después registra aquí las facturas reales de cada compañía.</p>
-        {OPC.map(([k, l]) => (
-          <label key={k} className="chk"><input type="checkbox" checked={cfg[k]} onChange={e => setCfg({ ...cfg, [k]: e.target.checked })} />{l}</label>))}
-        <p className="mu">{msg}</p>
-        <button onClick={guardarCfg}>Guardar</button>
-      </div>
+      <nav>
+        <button className={tab === 'facturas' ? 'on' : ''} onClick={() => setTab('facturas')}>Facturas</button>
+        <button className={tab === 'resumen' ? 'on' : ''} onClick={() => setTab('resumen')}>Resumen mensual</button>
+        <button className={tab === 'config' ? 'on' : ''} onClick={() => setTab('config')}>Configuración</button>
+      </nav>
+      <p className="mu">{msg}</p>
 
-      <div className="card">
-        <div className="bar"><h2>Facturas de suministros</h2>
+      {tab === 'resumen' && <div className="card">
+        <div className="bar"><h2>Resumen de {anio}</h2>
           <span><button onClick={() => setAnio(anio - 1)} aria-label="Año anterior">←</button>{' '}
             <button onClick={() => setAnio(ahora.getFullYear())}>Este año</button>{' '}
             <button onClick={() => setAnio(anio + 1)} aria-label="Año siguiente">→</button></span></div>
@@ -132,9 +132,13 @@ export default function Alg({ perfil, p, habs, facturas = [], onGuardado }:
             </table>
           </div>}
         <p className="mu">«Cobrado» es la suma de los suministros de las fichas de las habitaciones. El total anual usa las habitaciones actuales. Una diferencia negativa significa que pagas más de lo que repercutes.</p>
-      </div>
+        <p className="mu">Mes para el PDF: <b>{MESES[mes]} {anio}</b>.</p>
+        <button disabled={delMes.length === 0} onClick={descargar}>Descargar resumen PDF</button>
+        <p className="mu">El PDF compara las facturas reales del mes con los suministros que se cobran a los inquilinos.</p>
+      </div>}
 
-      <div className="card"><h2>{MESES[mes]} {anio} · facturas y recibo</h2>
+      {tab === 'facturas' && <div className="card"><h2>{MESES[mes]} {anio} · facturas y recibo</h2>
+        <p className="mu">Registra las facturas reales de cada compañía. Pulsa «Editar» en una factura para corregirla.</p>
         {delMes.length === 0 && <p className="mu">Este mes todavía no tiene facturas registradas.</p>}
         {delMes.map(f => (
           <div className="item" key={f.id}>
@@ -176,10 +180,15 @@ export default function Alg({ perfil, p, habs, facturas = [], onGuardado }:
         <p className="mu">{activo ? 'Ya hay una factura de este suministro y mes: al guardar se actualiza.' : 'Se añadirá una factura nueva.'}</p>
         <button className="p" disabled={!tipoActivo || importe === '' || busy} onClick={guardarFactura}>
           {activo ? 'Actualizar factura' : 'Añadir factura'}
-        </button>{' '}
-        <button disabled={delMes.length === 0} onClick={descargar}>Descargar resumen PDF</button>
-        <p className="mu">El PDF compara las facturas reales del mes con los suministros que se cobran a los inquilinos.</p>
-      </div>
+        </button>
+      </div>}
+
+      {tab === 'config' && <div className="card"><h2>Agua, luz y gas · {p.nombre}</h2>
+        <p>Marca qué suministros tiene la vivienda. Después registra las facturas reales de cada compañía en la pestaña «Facturas».</p>
+        {OPC.map(([k, l]) => (
+          <label key={k} className="chk"><input type="checkbox" checked={cfg[k]} onChange={e => setCfg({ ...cfg, [k]: e.target.checked })} />{l}</label>))}
+        <button onClick={guardarCfg}>Guardar</button>
+      </div>}
     </div>
   )
 }

@@ -10,8 +10,8 @@ propios datos (seguridad por fila en la base de datos).
 
 - Registro e inicio de sesión (Supabase Auth).
 - Varias propiedades (casas y garajes); dentro de cada una se elige qué gestionar.
-- **Casas:** Recibos de alquiler, Contrato y Agua, luz y gas.
-- **Garajes:** al abrir uno se entra directamente en su **Plaza de garaje**, con precio mensual, fecha de pago e IPC; sin contrato ni suministros.
+- **Casas:** Recibos de alquiler (pestañas Recibos, Pagos, Historial y Habitaciones), Contrato (pestañas Datos e Inventario) y Agua, luz y gas (pestañas Facturas, Resumen mensual y Configuración).
+- **Garajes:** al abrir uno se entra directamente en su **Plaza de garaje**, con precio mensual, fecha de pago e IPC y pestañas Emitir recibo y Recibos emitidos; sin contrato ni suministros.
 - Contrato de arrendamiento en PDF a partir de un modelo con los campos editables.
 - Agua, luz y gas: registro de las facturas reales de cada compañía (importe, periodo, fecha de notificación y fecha de cobro), comparación mensual con lo que se cobra a los inquilinos y resumen en PDF.
 - Tus datos como arrendador/a, habitaciones, inquilinos y precios.

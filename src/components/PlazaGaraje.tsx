@@ -12,6 +12,7 @@ export default function PlazaGaraje({ perfil, p, recibos, onCambio, onEditar }:
   const [mes, setMes] = useState<number | ''>(''), [anio, setAnio] = useState<number | ''>('')
   const [precio, setPrecio] = useState<number | ''>(''), [ipc, setIpc] = useState<number | ''>('')
   const [msg, setMsg] = useState(''), [busy, setBusy] = useState(false)
+  const [tab, setTab] = useState<'emitir' | 'recibos'>('emitir')
 
   function cambiarFecha(f: string) { setFecha(f); if (f) { const [y, m] = f.split('-'); setAnio(+y); setMes(+m - 1) } }
   const total = precio === '' ? 0 : totalGaraje(Number(precio), ipc === '' ? 0 : Number(ipc))
@@ -48,7 +49,12 @@ export default function PlazaGaraje({ perfil, p, recibos, onCambio, onEditar }:
 
   return (
     <div>
-      <div className="card"><div className="bar"><h2>Plaza de garaje · {p.nombre}</h2>
+      <nav>
+        <button className={tab === 'emitir' ? 'on' : ''} onClick={() => setTab('emitir')}>Emitir recibo</button>
+        <button className={tab === 'recibos' ? 'on' : ''} onClick={() => setTab('recibos')}>Recibos emitidos{recibos.length ? ` (${recibos.length})` : ''}</button>
+      </nav>
+      <p className="mu">{msg}</p>
+      {tab === 'emitir' && <div className="card"><div className="bar"><h2>Plaza de garaje · {p.nombre}</h2>
         {onEditar && <button onClick={onEditar}>Editar propiedad</button>}</div>
         {!perfil.nombre && <p className="err">Completa tus datos en «Mis datos»: aparecerán como arrendador/a.</p>}
         <p className="mu">{p.calle || 'Sin dirección'}{p.ciudad ? `, ${p.ciudad}` : ''}</p>
@@ -63,10 +69,9 @@ export default function PlazaGaraje({ perfil, p, recibos, onCambio, onEditar }:
             <input id="gi" type="number" min="0" step="0.01" value={ipc} onChange={e => setIpc(e.target.value === '' ? '' : +e.target.value)} /></div></div>
         {precio !== '' && <p className="mu">Total del recibo: <b>{eur(total)}</b> · {letras(total)}</p>}
         <p className="mu">El IPC se calcula sobre el precio mensual.</p>
-        <p className="mu">{msg}</p>
         <button className="p" disabled={!fecha || mes === '' || anio === '' || precio === '' || busy} onClick={guardar}>Guardar y descargar recibo PDF</button>
-      </div>
-      <div className="card"><h2>Recibos emitidos</h2>
+      </div>}
+      {tab === 'recibos' && <div className="card"><h2>Recibos emitidos</h2>
         {recibos.length === 0 && <p className="mu">Aún no has emitido ningún recibo de esta plaza.</p>}
         {recibos.map(r => {
           const t = totalGaraje(Number(r.precio), Number(r.ipc))
@@ -76,7 +81,7 @@ export default function PlazaGaraje({ perfil, p, recibos, onCambio, onEditar }:
             <span><button onClick={() => descargar(r)}>PDF</button> <button onClick={() => borrar(r)}>Eliminar</button></span>
           </div>
         })}
-      </div>
+      </div>}
     </div>
   )
 }

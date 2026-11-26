@@ -16,6 +16,7 @@ export default function Contrato({ perfil, p, habs }: { perfil: Perfil; p: Propi
     incluidos: '', fechaReserva: '', reserva: '', incluirInv: false, inventario: '',
   })
   const [msg, setMsg] = useState('')
+  const [tab, setTab] = useState<'datos' | 'inventario'>('datos')
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF(x => ({ ...x, [k]: v }))
   function elegir(id: string) {
     const h = habs.find(x => x.id === id)
@@ -46,29 +47,35 @@ export default function Contrato({ perfil, p, habs }: { perfil: Perfil; p: Propi
   const T = (k: keyof Form, l: string, tipo = 'text', ph = '') => (<div><label htmlFor={k}>{l}</label><input id={k} type={tipo} step="0.01" placeholder={ph} value={String(f[k])} onChange={e => set(k, e.target.value as never)} /></div>)
   return (
     <div>
-      <div className="card"><h2>Contrato de arrendamiento · {p.nombre}</h2>
-        <p className="mu">Elige una habitación para rellenar los datos del inquilino y revisa lo demás. Los campos son los subrayados en tu modelo.</p>
-        <label htmlFor="hab">Habitación (opcional: rellena los datos)</label>
-        <select id="hab" value={f.habId} onChange={e => elegir(e.target.value)}><option value="">Rellenar a mano…</option>
-          {habs.map(h => <option key={h.id} value={h.id}>Hab. {h.numero} · {h.inq_nombre}</option>)}</select>
-        {T('fechaContrato', 'Fecha del contrato', 'date')}</div>
-      <div className="card"><h2>Arrendataria</h2>
-        <label htmlFor="trato">Tratamiento</label><select id="trato" value={f.trato} onChange={e => set('trato', e.target.value as Form['trato'])}>
-          <option value="">Elige…</option><option value="Dña.">Dña.</option><option value="D.">D.</option></select>
-        {T('nombre', 'Nombre completo')}{T('nacionalidad', 'Nacionalidad del DNI', 'text', 'Ej.: española')}{T('dni', 'DNI / documento')}{T('domicilio', 'Domicilio a efecto de notificaciones')}{T('movil', 'Móvil')}</div>
-      <div className="card"><h2>Habitación y duración</h2>
-        {T('descripcion', 'Descripción de la habitación')}{T('numero', 'Nº de habitación')}
-        <div className="row">{T('inicio', 'Inicio', 'date')}{T('fin', 'Fin', 'date')}</div></div>
-      <div className="card"><h2>Precio, servicios y fianza</h2>
-        <div className="row">{T('renta', 'Renta mensual (€)', 'number')}{T('suministros', 'Suministros mensuales (€)', 'number')}</div>
-        {T('servicios', 'Servicios independientes de la renta', 'text', 'Ej.: electricidad, gas e internet')}
-        {T('incluidos', 'Gastos incluidos en la renta (vacío para omitir)', 'text', 'Ej.: agua y comunidad')}
-        <div className="row">{T('fechaReserva', 'Fecha de la reserva', 'date')}{T('reserva', 'Importe reserva / fianza (€)', 'number')}</div>
-        {renta > 0 && <p className="mu">Renta: {eurC(renta)} € ({letras(renta)}) · Primer pago: {eurC(renta + sumi)} € ({letras(renta + sumi)})</p>}</div>
-      <div className="card"><h2>Inventario</h2>
+      <nav>
+        <button className={tab === 'datos' ? 'on' : ''} onClick={() => setTab('datos')}>Datos</button>
+        <button className={tab === 'inventario' ? 'on' : ''} onClick={() => setTab('inventario')}>Inventario</button>
+      </nav>
+      {tab === 'datos' && <>
+        <div className="card"><h2>Contrato de arrendamiento · {p.nombre}</h2>
+          <p className="mu">Elige una habitación para rellenar los datos del inquilino y revisa lo demás. Los campos son los subrayados en tu modelo.</p>
+          <label htmlFor="hab">Habitación (opcional: rellena los datos)</label>
+          <select id="hab" value={f.habId} onChange={e => elegir(e.target.value)}><option value="">Rellenar a mano…</option>
+            {habs.map(h => <option key={h.id} value={h.id}>Hab. {h.numero} · {h.inq_nombre}</option>)}</select>
+          {T('fechaContrato', 'Fecha del contrato', 'date')}</div>
+        <div className="card"><h2>Arrendataria</h2>
+          <label htmlFor="trato">Tratamiento</label><select id="trato" value={f.trato} onChange={e => set('trato', e.target.value as Form['trato'])}>
+            <option value="">Elige…</option><option value="Dña.">Dña.</option><option value="D.">D.</option></select>
+          {T('nombre', 'Nombre completo')}{T('nacionalidad', 'Nacionalidad del DNI', 'text', 'Ej.: española')}{T('dni', 'DNI / documento')}{T('domicilio', 'Domicilio a efecto de notificaciones')}{T('movil', 'Móvil')}</div>
+        <div className="card"><h2>Habitación y duración</h2>
+          {T('descripcion', 'Descripción de la habitación')}{T('numero', 'Nº de habitación')}
+          <div className="row">{T('inicio', 'Inicio', 'date')}{T('fin', 'Fin', 'date')}</div></div>
+        <div className="card"><h2>Precio, servicios y fianza</h2>
+          <div className="row">{T('renta', 'Renta mensual (€)', 'number')}{T('suministros', 'Suministros mensuales (€)', 'number')}</div>
+          {T('servicios', 'Servicios independientes de la renta', 'text', 'Ej.: electricidad, gas e internet')}
+          {T('incluidos', 'Gastos incluidos en la renta (vacío para omitir)', 'text', 'Ej.: agua y comunidad')}
+          <div className="row">{T('fechaReserva', 'Fecha de la reserva', 'date')}{T('reserva', 'Importe reserva / fianza (€)', 'number')}</div>
+          {renta > 0 && <p className="mu">Renta: {eurC(renta)} € ({letras(renta)}) · Primer pago: {eurC(renta + sumi)} € ({letras(renta + sumi)})</p>}</div>
+      </>}
+      {tab === 'inventario' && <div className="card"><h2>Inventario</h2>
         <label className="chk"><input type="checkbox" checked={f.incluirInv} onChange={e => set('incluirInv', e.target.checked)} />Incluir inventario en una página aparte</label>
         {f.incluirInv && <><p className="mu">Escribe el inventario de esta habitación. Las líneas que empiezan por «# » salen en negrita.</p>
-          <textarea rows={12} value={f.inventario} placeholder="Ej.: cama, colchón, armario, mesa y silla…" onChange={e => set('inventario', e.target.value)} /></>}</div>
+          <textarea rows={12} value={f.inventario} placeholder="Ej.: cama, colchón, armario, mesa y silla…" onChange={e => set('inventario', e.target.value)} /></>}</div>}
       <div className="card">
         {faltan.length > 0 && <p className="err">Falta: {faltan.join(', ')}.</p>}
         <p className="mu">{msg}</p>
