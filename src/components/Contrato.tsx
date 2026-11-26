@@ -27,7 +27,7 @@ export default function Contrato({ perfil, p, habs }: { perfil: Perfil; p: Propi
   const faltan = [
     !perfil.nombre && 'tu nombre en «Mis datos»', !perfil.dni && 'tu DNI en «Mis datos»',
     !perfil.direccion && 'tu dirección en «Mis datos»', !perfil.telefono && 'tu teléfono en «Mis datos»',
-    !perfil.iban && 'tu IBAN en «Mis datos»', !p.calle && 'la calle de la propiedad', !p.ciudad && 'la ciudad de la propiedad',
+    !perfil.iban && 'tu IBAN en «Mis datos»', !p.calle && 'la calle de la propiedad', !p.ciudad && 'el municipio de la propiedad',
     !f.fechaContrato && 'la fecha del contrato', !f.trato && 'el tratamiento (Dña./D.)',
     !f.nombre && 'el nombre de la arrendataria', !f.nacionalidad && 'la nacionalidad del DNI', !f.dni && 'el DNI de la arrendataria',
     !f.numero && 'el número de habitación', !f.inicio && 'la fecha de inicio', !f.fin && 'la fecha de fin',

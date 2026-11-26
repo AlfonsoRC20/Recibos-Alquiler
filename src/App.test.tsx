@@ -11,6 +11,7 @@ vi.mock('./lib/supabase', () => {
     for (const m of ['select', 'eq', 'order']) b[m] = () => b
     b.maybeSingle = () => Promise.resolve({ data: h.datos[t], error: null })
     b.update = (v: unknown) => { h.llamadas.push({ t, op: 'update', v }); return b }
+    b.delete = () => { h.llamadas.push({ t, op: 'delete', v: undefined }); return b }
     b.then = (res: (x: unknown) => unknown) => res({ data: h.datos[t], error: null })
     return b
   }
@@ -27,9 +28,9 @@ beforeEach(() => {
   h.llamadas.length = 0; location.hash = ''
   h.datos = { perfiles: { nombre: 'Ana', dni: '1', direccion: 'x', telefono: '6', iban: 'ES00', banco: 'B' },
     propiedades: [prop(CASA, 'casa', 'Vivienda de prueba'), prop(GARAJE, 'garaje', 'Garaje 5')],
-    habitaciones: [], recibos: [], pagos_habitacion: [], recibos_garaje: [] }
+    habitaciones: [], recibos: [], pagos_habitacion: [], recibos_garaje: [], facturas_suministros: [] }
 })
-afterEach(cleanup)
+afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 test('tras iniciar sesión se elige propiedad y hay botón para crear', async () => {
   render(<App />)
@@ -41,7 +42,6 @@ test('tras iniciar sesión se elige propiedad y hay botón para crear', async ()
 test('una casa ofrece Recibos, Contrato y Agua, luz y gas', async () => {
   render(<App />); fireEvent.click(await screen.findByText(/Vivienda de prueba/))
   expect(await screen.findByText('Recibos de alquiler')).toBeTruthy()
-  expect(screen.getByText('Cuadrícula de pagos')).toBeTruthy()
   expect(screen.getByText('Contrato')).toBeTruthy(); expect(screen.getByText('Agua, luz y gas')).toBeTruthy()
   expect(screen.getByText('Gestionas: Luz')).toBeTruthy()
 })
@@ -72,6 +72,19 @@ test('Agua, luz y gas guarda los suministros elegidos de la propiedad', async ()
   fireEvent.click(screen.getByText('Guardar'))
   await waitFor(() => expect(h.llamadas[h.llamadas.length - 1]).toEqual({ t: 'propiedades', op: 'update', v: { gestiona_agua: true, gestiona_luz: false, gestiona_gas: true } }))
 })
+test('Agua, luz y gas registra facturas y muestra el resumen mensual', async () => {
+  const anio = new Date().getFullYear(), mes = new Date().getMonth()
+  h.datos.habitaciones = [
+    { id: 'h1', numero: '1', concepto: '', renta: 500, suministros: 60, inq_nombre: 'Inquilina Uno', inq_dni: '', inq_direccion: '', inq_telefono: '' },
+    { id: 'h2', numero: '2', concepto: '', renta: 500, suministros: 60, inq_nombre: 'Inquilina Dos', inq_dni: '', inq_direccion: '', inq_telefono: '' },
+  ]
+  h.datos.facturas_suministros = [{ id: 'f1', propiedad_id: CASA, tipo: 'agua', proveedor: 'EMASESA', anio, mes, importe: 78.75, nota: '' }]
+  location.hash = `/${CASA}/alg`; render(<App />)
+  expect(await screen.findByText('Facturas de suministros')).toBeTruthy()
+  expect(screen.getByText('Cobrado')).toBeTruthy()
+  expect(screen.getByText('Total ' + anio)).toBeTruthy()
+  expect(screen.getByLabelText('Importe de la factura (€)')).toBeTruthy()
+})
 test('el contrato se abre vacío, sin valores de ejemplo, y pide los datos que faltan', async () => {
   location.hash = `/${CASA}/contrato`; render(<App />)
   expect(await screen.findByText(/Contrato de arrendamiento · Vivienda de prueba/)).toBeTruthy()
@@ -80,15 +93,42 @@ test('el contrato se abre vacío, sin valores de ejemplo, y pide los datos que f
   expect(screen.getByText(/Falta:/)).toBeTruthy()
   expect((screen.getByText('Descargar contrato PDF') as HTMLButtonElement).disabled).toBe(true)
 })
-test('Recibos de alquiler mantiene sus pestañas propias', async () => {
+test('Recibos de alquiler incluye la cuadrícula de pagos como pestaña', async () => {
   location.hash = `/${CASA}/recibos`; render(<App />)
   expect(await screen.findByText('Recibos')).toBeTruthy()
+  expect(screen.getByText('Pagos')).toBeTruthy()
   expect(screen.getByText('Historial')).toBeTruthy(); expect(screen.getByText('Habitaciones')).toBeTruthy()
-  expect(screen.queryByText('Cuadrícula de pagos')).toBeNull()
 })
-test('la cuadrícula de pagos es una sección aparte y permite marcar una habitación', async () => {
+test('la cuadrícula de pagos está dentro de recibos y permite marcar una habitación', async () => {
   h.datos.habitaciones = [{ id: 'h1', numero: '1', concepto: '', renta: 500, suministros: 50, inq_nombre: 'Inquilina', inq_dni: '', inq_direccion: '', inq_telefono: '' }]
-  location.hash = `/${CASA}/pagos`; render(<App />)
+  location.hash = `/${CASA}/recibos`; render(<App />)
+  fireEvent.click(await screen.findByText('Pagos'))
   expect(await screen.findByText(/Cuadrícula de pagos/)).toBeTruthy()
   expect(screen.getByLabelText(/Marcar pagado Habitación 1, enero \d{4}/)).toBeTruthy()
+})
+test('al crear una propiedad solo se muestra el formulario, con Municipio', async () => {
+  render(<App />)
+  expect(await screen.findByText(/Vivienda de prueba/)).toBeTruthy()
+  fireEvent.click(screen.getByText('Crear propiedad'))
+  expect(await screen.findByText('Nueva propiedad')).toBeTruthy()
+  expect(screen.queryByText('¿Qué propiedad quieres gestionar?')).toBeNull()
+  expect(screen.getByLabelText('Municipio')).toBeTruthy()
+  expect(screen.queryByLabelText('Ciudad')).toBeNull()
+})
+test('anular un recibo lo quita de la lista', async () => {
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  h.datos.recibos = [{ id: 'r1', habitacion_id: 'h1', oculto: false, numero: '2026-0001', anio: 2026, mes: 10, fecha_pago: '2026-11-05', estado: 'emitido', hab_numero: '1', concepto: '', renta: 500, suministros: 60, inq_nombre: 'Inquilina', inq_dni: '', inq_direccion: '', inq_telefono: '' }]
+  location.hash = `/${CASA}/recibos`; render(<App />)
+  fireEvent.click(await screen.findByText('Historial'))
+  fireEvent.click(await screen.findByText('Anular'))
+  await waitFor(() => expect(h.llamadas[h.llamadas.length - 1]).toEqual({ t: 'recibos', op: 'update', v: { estado: 'anulado', oculto: true } }))
+})
+test('un recibo quitado se puede eliminar permanentemente', async () => {
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  h.datos.recibos = [{ id: 'r1', habitacion_id: 'h1', oculto: true, numero: '2026-0001', anio: 2026, mes: 10, fecha_pago: '2026-11-05', estado: 'anulado', hab_numero: '1', concepto: '', renta: 500, suministros: 60, inq_nombre: 'Inquilina', inq_dni: '', inq_direccion: '', inq_telefono: '' }]
+  location.hash = `/${CASA}/recibos`; render(<App />)
+  fireEvent.click(await screen.findByText('Historial'))
+  fireEvent.click(await screen.findByText(/Mostrar quitados/))
+  fireEvent.click(await screen.findByText('Eliminar permanentemente'))
+  await waitFor(() => expect(h.llamadas[h.llamadas.length - 1]).toEqual({ t: 'recibos', op: 'delete', v: undefined }))
 })

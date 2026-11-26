@@ -24,10 +24,21 @@ export default function PropiedadForm({ inicial, onGuardada, onCancelar, onElimi
     setBusy(false)
   }
   async function eliminar() {
-    if (!inicial || !confirm(`¿Eliminar la propiedad «${inicial.nombre}»? Solo es posible si no tiene habitaciones.`)) return
+    if (!inicial || busy) return
+    const esGaraje = inicial.tipo === 'garaje'
+    const detalle = esGaraje
+      ? 'Se borrarán también sus recibos.'
+      : 'Se borrarán también sus habitaciones, recibos, pagos y facturas de suministros.'
+    if (!confirm(`¿Eliminar ${esGaraje ? 'la plaza de garaje' : 'la casa'} «${inicial.nombre}»? ${detalle} Esta acción no se puede deshacer.`)) return
+    setBusy(true); setMsg('')
+    // La migración 007 hace que se borren en cascada habitaciones, recibos, pagos y facturas.
     const { error } = await supabase.from('propiedades').delete().eq('id', inicial.id)
-    if (error) setMsg(error.code === '23503' ? 'No se puede eliminar: tiene habitaciones (y sus recibos). Bórralas antes.' : error.message)
-    else onEliminada?.()
+    if (error) {
+      setMsg(error.code === '23503'
+        ? 'No se pudo eliminar: ejecuta supabase/007_borrados.sql en Supabase para activar el borrado en cascada.'
+        : 'No se pudo eliminar la propiedad: ' + error.message)
+    } else onEliminada?.()
+    setBusy(false)
   }
   return (
     <div className="card"><h2>{inicial ? 'Editar propiedad' : 'Nueva propiedad'}</h2>
@@ -38,12 +49,12 @@ export default function PropiedadForm({ inicial, onGuardada, onCancelar, onElimi
       <label htmlFor="pc">Calle y número</label>
       <input id="pc" value={f.calle} placeholder="Ej.: Calle prueba prueba nº 1" onChange={e => set('calle', e.target.value)} />
       <div className="row"><div><label htmlFor="pp">Código postal</label><input id="pp" value={f.codigo_postal} placeholder="Ej.: 00000" onChange={e => set('codigo_postal', e.target.value)} /></div>
-        <div><label htmlFor="pi">Ciudad</label><input id="pi" value={f.ciudad} placeholder="Ej.: Ciudad" onChange={e => set('ciudad', e.target.value)} /></div></div>
+        <div><label htmlFor="pi">Municipio</label><input id="pi" value={f.ciudad} placeholder="Ej.: Municipio" onChange={e => set('ciudad', e.target.value)} /></div></div>
       <label htmlFor="pv">Provincia</label><input id="pv" value={f.provincia} placeholder="Ej.: Provincia" onChange={e => set('provincia', e.target.value)} />
       <p className="err">{msg}</p>
       <button className="p" disabled={busy || !f.nombre.trim() || !f.tipo} onClick={guardar}>{inicial ? 'Guardar' : 'Crear propiedad'}</button>{' '}
-      {onCancelar && <button onClick={onCancelar}>Cancelar</button>}{' '}
-      {inicial && <button onClick={eliminar}>Eliminar propiedad</button>}
+      {onCancelar && <button disabled={busy} onClick={onCancelar}>Cancelar</button>}{' '}
+      {inicial && <button disabled={busy} onClick={eliminar}>Eliminar propiedad</button>}
     </div>
   )
 }

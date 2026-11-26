@@ -69,7 +69,7 @@ export function generarResumenSuministros(
   t('Dirección:', L + W / 2 + 4, 130, 'bold')
   t([p.calle, [p.codigo_postal, p.ciudad].filter(Boolean).join(' '), p.provincia].filter(Boolean).join(' · ') || 'Sin dirección',
     L + W / 2 + 70, 130, 'italic', 8)
-  t('Ciudad:', L + W / 2 + 4, 147, 'bold'); t(p.ciudad || '—', L + W / 2 + 70, 147, 'italic')
+  t('Municipio:', L + W / 2 + 4, 147, 'bold'); t(p.ciudad || '—', L + W / 2 + 70, 147, 'italic')
 
   y = 174
   t('Facturas del mes', L + 4, y, 'bold', 11)

@@ -28,10 +28,20 @@ export default function Historial({ perfil, lista, onChange, filtro, mostrarQuit
       setMsg('')
     } catch (e) { setMsg('No se pudo generar el PDF: ' + (e as Error).message) }
   }
-  const anular = (r: Recibo) => confirm(`¿Anular el recibo ${r.numero} (Hab. ${r.hab_numero}, ${MESES[r.mes]} ${r.anio})? Podrás desanularlo después.`)
-    && cambiar(r, { estado: 'anulado' }, `Recibo ${r.numero} anulado.`)
+  const anular = (r: Recibo) => confirm(`¿Anular el recibo ${r.numero} (Hab. ${r.hab_numero}, ${MESES[r.mes]} ${r.anio})? Se quitará de la lista y podrás recuperarlo en «Mostrar quitados».`)
+    && cambiar(r, { estado: 'anulado', oculto: true }, `Recibo ${r.numero} anulado y quitado de la lista.`)
   const quitar = (r: Recibo) => confirm(`¿Quitar el recibo anulado ${r.numero} de la lista? Podrás verlo con «Mostrar quitados».`)
     && cambiar(r, { oculto: true }, `Recibo ${r.numero} quitado de la lista.`)
+  async function borrar(r: Recibo) {
+    const { error } = await supabase.from('recibos').delete().eq('id', r.id)
+    if (error) {
+      setMsg(error.code === '42501'
+        ? 'No se pudo eliminar definitivamente: ejecuta supabase/007_borrados.sql en Supabase.'
+        : 'No se pudo eliminar definitivamente: ' + error.message)
+    } else { setMsg(`Recibo ${r.numero} eliminado definitivamente.`); onChange() }
+  }
+  const eliminar = (r: Recibo) => confirm(`¿Eliminar definitivamente el recibo ${r.numero} (Hab. ${r.hab_numero}, ${MESES[r.mes]} ${r.anio})? Esta acción no se puede deshacer.`)
+    && borrar(r)
 
   return (
     <div className="card"><h2>{titulo}</h2>
@@ -49,8 +59,10 @@ export default function Historial({ perfil, lista, onChange, filtro, mostrarQuit
               {r.estado === 'emitido'
                 ? <><button onClick={() => descargar(r)}>PDF</button> <button onClick={() => anular(r)}>Anular</button></>
                 : <><button disabled={bloqueado} onClick={() => cambiar(r, { estado: 'emitido', oculto: false }, `Recibo ${r.numero} desanulado.`)}>Desanular</button>{' '}
-                  {r.oculto ? <button onClick={() => cambiar(r, { oculto: false }, `Recibo ${r.numero} vuelve a la lista.`)}>Mostrar</button>
-                            : <button onClick={() => quitar(r)}>Quitar</button>}</>}
+                  {r.oculto
+                    ? <><button onClick={() => cambiar(r, { oculto: false }, `Recibo ${r.numero} vuelve a la lista.`)}>Mostrar</button>{' '}
+                      <button onClick={() => eliminar(r)}>Eliminar permanentemente</button></>
+                    : <button onClick={() => quitar(r)}>Quitar</button>}</>}
             </span>
           </div>)
       })}
