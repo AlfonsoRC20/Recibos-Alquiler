@@ -14,8 +14,8 @@ const TIPOS: TipoSuministro[] = ['agua', 'luz', 'gas']
 const eur = (n: number) => n.toFixed(2).replace('.', ',') + ' €'
 const redondo = (n: number) => Math.round(n * 100) / 100
 
-export default function Alg({ perfil, p, habs, facturas, onGuardado }:
-  { perfil: Perfil; p: Propiedad; habs: Habitacion[]; facturas: FacturaSuministro[]; onGuardado: () => void }) {
+export default function Alg({ perfil, p, habs, facturas = [], onGuardado }:
+  { perfil: Perfil; p: Propiedad; habs: Habitacion[]; facturas?: FacturaSuministro[]; onGuardado: () => void }) {
   const ahora = new Date()
   const [cfg, setCfg] = useState<Record<K, boolean>>({
     gestiona_agua: p.gestiona_agua, gestiona_luz: p.gestiona_luz, gestiona_gas: p.gestiona_gas,
